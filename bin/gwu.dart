@@ -214,6 +214,7 @@ List<ClassTime> parseClassTimes(List<Element> rowOneCells) {
     classTime.endTime = parseTime(timeRange[1]);
 
     classTimes.add(classTime);
+
   }
   return classTimes;
 }
