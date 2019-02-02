@@ -7,7 +7,6 @@ import 'package:algolia/algolia.dart';
 
 import 'package:course_gnome/model/Course.dart';
 import 'config.dart';
-import 'firestore.dart';
 
 final courses = List<Course>();
 

@@ -5,3 +5,5 @@ dependencies:
     path: ../course_gnome/course_gnome
   html: ^0.13.3+3
   algolia: ^0.1.3+2
+  firebase_dart:
+    path: ../../firebase_dart
