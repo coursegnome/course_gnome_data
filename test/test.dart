@@ -5,7 +5,7 @@ import 'dart:io';
 import 'package:test/test.dart';
 
 import 'package:core/core.dart';
-import 'package:course_gnome_scrape/GWUParser.dart';
+import 'package:course_gnome_scrape/GWUParser.dart' as gwu;
 
 void main() {
 //  test('Function completes succesfully', () {
@@ -28,7 +28,8 @@ void main() {
     expect(course.offerings.length, 1);
 
     final Offering offering = course.offerings.first;
-    expect(offering.days, [false, false, true, false, true, false, false]);
+    expect(
+        offering.days, <bool>[false, false, true, false, true, false, false]);
     expect(offering.latestEndTime, TimeOfDay(hour: 21, minute: 5));
     expect(offering.earliestStartTime, TimeOfDay(hour: 18, minute: 10));
     expect(offering.linkedOfferings, isNull);
@@ -36,17 +37,18 @@ void main() {
     expect(offering.status, Status.Open);
     expect(offering.crn, '10704');
     expect(offering.sectionNumber, '10');
-    expect(offering.instructors, ['Tarpley, R']);
+    expect(offering.instructors, <String>['Tarpley, R']);
     expect(offering.fee, isNull);
     expect(offering.comments,
         'Once this course has closed, an electronic waitlist will be available. Please see: http://go.gwu.edu/waitlist for more information.');
     expect(offering.findBooksLink,
         'http://www.bkstr.com/webapp/wcs/stores/servlet/booklookServlet?bookstore_id-1=122&term_id-1=201902&div-1=&dept-1=ACCY&course-1=2001&section-1=10');
-    expect(offering.courseAttributes, ['CCPR']);
+    expect(offering.courseAttributes, <String>['CCPR']);
     expect(offering.classTimes.length, 1);
 
     final ClassTime classTime = offering.classTimes.first;
-    expect(classTime.days, [false, false, true, false, true, false, false]);
+    expect(
+        classTime.days, <bool>[false, false, true, false, true, false, false]);
     expect(classTime.endTime, TimeOfDay(hour: 21, minute: 5));
     expect(classTime.startTime, TimeOfDay(hour: 18, minute: 10));
     expect(classTime.location, 'DUQUES 152');
@@ -55,12 +57,14 @@ void main() {
   test('Multiple class times', () async {
     final List<Course> courses = await loadCourses('multiday.html');
     final Offering offering = courses.first.offerings.first;
-    expect(offering.days, [false, false, true, false, true, false, false]);
+    expect(
+        offering.days, <bool>[false, false, true, false, true, false, false]);
     expect(offering.earliestStartTime, TimeOfDay(hour: 11, minute: 10));
     expect(offering.latestEndTime, TimeOfDay(hour: 17, minute: 0));
     expect(offering.classTimes.length, 2);
     expect(
-        offering.classTimes.every((ct) => ct.location == 'SEH 8750'), isTrue);
+        offering.classTimes.every((ClassTime ct) => ct.location == 'SEH 8750'),
+        isTrue);
     expect(offering.fee, 'BiSc Lab Fee \$55.00');
   });
 
@@ -93,7 +97,7 @@ void main() {
 }
 
 Future<List<Course>> loadCourses(String fileSuffix) async {
-  const basePath = 'test/html/';
-  final courseString = await File(basePath + fileSuffix).readAsString();
-  return await GWUParser.parseResponse(courseString, []);
+  const String basePath = 'test/html/';
+  final String courseString = await File(basePath + fileSuffix).readAsString();
+  return await gwu.parseResponse(courseString, <Course>[]);
 }
