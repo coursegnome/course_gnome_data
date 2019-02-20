@@ -13,7 +13,6 @@ void main() async {
 
 uploadCourses(List<Course> courses, Season season) async {
   print('Uploading courses for season: $season');
-
   final Algolia algolia = await Algolia.init(
       applicationId: '4AISU681XR', apiKey: AlgoliaConfig.apiKey);
   final index = 'gwu-${GWUParser.getSeasonCode(season)}';

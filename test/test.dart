@@ -17,13 +17,15 @@ void main() async {
 //  });
 
   test('Normal course', () async {
-    final courseString = await File('test/html/normal.html').readAsString();
-    final course = GWUParser.parseResponse(courseString, []).first;
+    final courses = await loadCourses('normal.html');
+    final course = courses.first;
     expect(course.departmentAcronym, 'ACCY');
     expect(course.name, 'Introduction to Financial Accounting');
     expect(course.bulletinLink, 'http://bulletin.gwu.edu/search/?P=ACCY+2001');
     expect(course.credit, '3.00');
     expect(course.departmentNumber, '2001');
+    expect(course.description,
+        'Fundamental concepts underlying financial statements and the informed use of accounting information; analysis and recording of business transactions; preparation and understanding of financial statements; measurement of the profitability and financial position of a business. Restricted to sophomores.');
     expect(course.offerings.length, 1);
 
     final offering = course.offerings.first;
@@ -51,10 +53,9 @@ void main() async {
     expect(classTime.location, 'DUQUES 152');
   });
 
-  test('Multiple days', () async {
-    final courseString = await File('test/html/multiday.html').readAsString();
-    final offering =
-        GWUParser.parseResponse(courseString, []).first.offerings.first;
+  test('Multiple class times', () async {
+    final courses = await loadCourses('multiday.html');
+    final offering = courses.first.offerings.first;
     expect(offering.days, [false, false, true, false, true, false, false]);
     expect(offering.earliestStartTime, TimeOfDay(hour: 11, minute: 10));
     expect(offering.latestEndTime, TimeOfDay(hour: 17, minute: 0));
@@ -65,10 +66,8 @@ void main() async {
   });
 
   test('Linked offerings', () async {
-    final courseString =
-        await File('test/html/linkedofferings.html').readAsString();
-    final offering =
-        GWUParser.parseResponse(courseString, []).first.offerings.first;
+    final courses = await loadCourses('linkedofferings.html');
+    final offering = courses.first.offerings.first;
     expect(offering.linkedOfferings.length, 4);
     expect(offering.linkedOfferingsName, 'Laboratory');
     expect(offering.linkedOfferings[0].sectionNumber, '40');
@@ -78,24 +77,24 @@ void main() async {
   });
 
   test('Multiple offerings', () async {
-    final courseString =
-        await File('test/html/multioffering.html').readAsString();
-    final course = GWUParser.parseResponse(courseString, []).first;
+    final courses = await loadCourses('multioffering.html');
+    final course = courses.first;
     expect(course.offerings.length, 3);
     expect(course.name, 'Principles of Economics II');
   });
 
   test('Location but no times', () async {
-    final courseString = await File('test/html/notimes.html').readAsString();
-    final classTime = GWUParser.parseResponse(courseString, [])
-        .first
-        .offerings
-        .first
-        .classTimes
-        .first;
+    final courses = await loadCourses('notimes.html');
+    final classTime = courses.first.offerings.first.classTimes.first;
     expect(classTime.location, 'ON LINE');
     expect(classTime.startTime, isNull);
     expect(classTime.endTime, isNull);
     expect(classTime.days, isNull);
   });
+}
+
+Future<List<Course>> loadCourses(String fileSuffix) async {
+  const basePath = 'test/html/';
+  final courseString = await File(basePath + fileSuffix).readAsString();
+  return await GWUParser.parseResponse(courseString, []);
 }

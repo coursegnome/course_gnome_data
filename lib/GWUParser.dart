@@ -1,12 +1,11 @@
 import 'dart:math';
+import 'dart:async';
 
 import 'package:html/parser.dart' show parse;
 import 'package:html/dom.dart';
 import 'package:http/http.dart' as http;
-import 'package:algolia/algolia.dart';
 
 import 'package:core/core.dart';
-import 'config.dart';
 
 enum Season {
   Spring2019,
@@ -30,8 +29,11 @@ class GWUParser {
     final seasonCode = getSeasonCode(season);
     const maxEndIndex = 10000;
     final client = http.Client();
+    final indexIncrement = season == Season.Summer2019 ? 500 : 100;
     var startIndex = 1000;
-    var endIndex = 1499;
+    var endIndex = season == Season.Summer2019 ? 1499 : 1099;
+
+    final stopwatch = Stopwatch()..start();
 
     List<Course> courses = [];
 
@@ -49,7 +51,7 @@ class GWUParser {
         };
         try {
           final response = await client.post(url, body: body);
-          courses = parseResponse(response.body, courses);
+          courses = await parseResponse(response.body, courses);
           lastPage = isLastPage(response);
         } catch (e) {
           print(e);
@@ -57,8 +59,9 @@ class GWUParser {
         }
         ++pageNum;
       } while (lastPage);
-      startIndex += 500;
-      endIndex += 500;
+      startIndex += indexIncrement;
+      endIndex += indexIncrement;
+      print('Time elapsed: ${stopwatch.elapsed.inSeconds}');
     }
     client.close();
     return courses;
@@ -68,9 +71,11 @@ class GWUParser {
     return response.body.contains('Next Page');
   }
 
-  static List<Course> parseResponse(String response, List<Course> courses) {
-    parse(response).getElementsByClassName('courseListing').forEach((result) {
-      courses = parseCourse(
+  static Future<List<Course>> parseResponse(
+      String response, List<Course> courses) async {
+    final results = parse(response).getElementsByClassName('courseListing');
+    await Future.forEach(results, (result) async {
+      courses = await parseCourse(
         result.getElementsByClassName('coursetable'),
         courses,
       );
@@ -79,12 +84,13 @@ class GWUParser {
     return courses;
   }
 
-  static List<Course> parseCourse(
-      List<Element> resultRows, List<Course> courses) {
+  static Future<List<Course>> parseCourse(
+      List<Element> resultRows, List<Course> courses) async {
     final cells = resultRows[0].querySelectorAll('td');
     final depAcr = cells[2].querySelector('span').text.trim();
     final depNumber = cells[2].querySelector('a').text.trim();
     final name = cells[4].text.trim();
+    final bulletinLink = cells[2].querySelector('a').attributes['href'];
     final courseIndex = courses.indexWhere((c) =>
         c.departmentNumber == depNumber &&
         c.departmentAcronym == depAcr &&
@@ -95,17 +101,27 @@ class GWUParser {
       course = courses[courseIndex];
     } else {
       course = Course(
+        description: await requestDescription(bulletinLink),
         name: name,
         departmentAcronym: depAcr,
         departmentNumber: depNumber,
         credit: cells[5].text.trim(),
-        bulletinLink: cells[2].querySelector('a').attributes['href'],
+        bulletinLink: bulletinLink,
         offerings: [],
       );
       courses.add(course);
     }
     course.offerings.add(parseOffering(resultRows, false));
     return courses;
+  }
+
+  static Future<String> requestDescription(String bulletinLink) async {
+    final response = await http.post(bulletinLink);
+    return parse(response.body)
+        .getElementsByClassName('courseblockdesc')
+        .first
+        .text
+        .trim();
   }
 
   static Offering parseOffering(List<Element> resultRows, bool linked) {
@@ -227,15 +243,8 @@ class GWUParser {
       final days = dayTime.substring(0, index);
       final timeRange = dayTime.substring(index, dayTime.length).split('-');
 
-      final dayList = [
-        days.contains('U'),
-        days.contains('M'),
-        days.contains('T'),
-        days.contains('W'),
-        days.contains('R'),
-        days.contains('F'),
-        days.contains('S'),
-      ];
+      const dayCodes = ['U', 'M', 'T', 'W', 'R', 'F', 'S'];
+      final dayList = dayCodes.map((c) => days.contains(c)).toList();
 
       classTimes.add(
         ClassTime(
@@ -255,9 +264,7 @@ class GWUParser {
     var hours = int.parse(split[0]);
     var minutes = int.parse(split[1].substring(0, 2));
     final amPm = split[1].substring(2, 4);
-    if (amPm == 'PM' && hours != 12) {
-      hours += 12;
-    }
+    if (amPm == 'PM' && hours != 12) hours += 12;
     return TimeOfDay(hour: hours, minute: minutes);
   }
 }
