@@ -1,4 +1,4 @@
-@TestOn("vm")
+@TestOn('vm')
 
 import 'dart:io';
 
@@ -7,7 +7,7 @@ import 'package:test/test.dart';
 import 'package:core/core.dart';
 import 'package:course_gnome_scrape/GWUParser.dart';
 
-void main() async {
+void main() {
 //  test('Function completes succesfully', () {
 //    final courseResult =
 //        parse(courseString).getElementsByClassName('courseListing')[0];
@@ -15,10 +15,9 @@ void main() async {
 //    final course = parseCourse(resultRows[0]);
 //    final offering = parseOfferingRows(resultRows);
 //  });
-
   test('Normal course', () async {
-    final courses = await loadCourses('normal.html');
-    final course = courses.first;
+    final List<Course> courses = await loadCourses('normal.html');
+    final Course course = courses.first;
     expect(course.departmentAcronym, 'ACCY');
     expect(course.name, 'Introduction to Financial Accounting');
     expect(course.bulletinLink, 'http://bulletin.gwu.edu/search/?P=ACCY+2001');
@@ -28,7 +27,7 @@ void main() async {
         'Fundamental concepts underlying financial statements and the informed use of accounting information; analysis and recording of business transactions; preparation and understanding of financial statements; measurement of the profitability and financial position of a business. Restricted to sophomores.');
     expect(course.offerings.length, 1);
 
-    final offering = course.offerings.first;
+    final Offering offering = course.offerings.first;
     expect(offering.days, [false, false, true, false, true, false, false]);
     expect(offering.latestEndTime, TimeOfDay(hour: 21, minute: 5));
     expect(offering.earliestStartTime, TimeOfDay(hour: 18, minute: 10));
@@ -46,7 +45,7 @@ void main() async {
     expect(offering.courseAttributes, ['CCPR']);
     expect(offering.classTimes.length, 1);
 
-    final classTime = offering.classTimes.first;
+    final ClassTime classTime = offering.classTimes.first;
     expect(classTime.days, [false, false, true, false, true, false, false]);
     expect(classTime.endTime, TimeOfDay(hour: 21, minute: 5));
     expect(classTime.startTime, TimeOfDay(hour: 18, minute: 10));
@@ -54,8 +53,8 @@ void main() async {
   });
 
   test('Multiple class times', () async {
-    final courses = await loadCourses('multiday.html');
-    final offering = courses.first.offerings.first;
+    final List<Course> courses = await loadCourses('multiday.html');
+    final Offering offering = courses.first.offerings.first;
     expect(offering.days, [false, false, true, false, true, false, false]);
     expect(offering.earliestStartTime, TimeOfDay(hour: 11, minute: 10));
     expect(offering.latestEndTime, TimeOfDay(hour: 17, minute: 0));
@@ -66,8 +65,8 @@ void main() async {
   });
 
   test('Linked offerings', () async {
-    final courses = await loadCourses('linkedofferings.html');
-    final offering = courses.first.offerings.first;
+    final List<Course> courses = await loadCourses('linkedofferings.html');
+    final Offering offering = courses.first.offerings.first;
     expect(offering.linkedOfferings.length, 4);
     expect(offering.linkedOfferingsName, 'Laboratory');
     expect(offering.linkedOfferings[0].sectionNumber, '40');
@@ -77,15 +76,15 @@ void main() async {
   });
 
   test('Multiple offerings', () async {
-    final courses = await loadCourses('multioffering.html');
-    final course = courses.first;
+    final List<Course> courses = await loadCourses('multioffering.html');
+    final Course course = courses.first;
     expect(course.offerings.length, 3);
     expect(course.name, 'Principles of Economics II');
   });
 
   test('Location but no times', () async {
-    final courses = await loadCourses('notimes.html');
-    final classTime = courses.first.offerings.first.classTimes.first;
+    final List<Course> courses = await loadCourses('notimes.html');
+    final ClassTime classTime = courses.first.offerings.first.classTimes.first;
     expect(classTime.location, 'ON LINE');
     expect(classTime.startTime, isNull);
     expect(classTime.endTime, isNull);
