@@ -15,9 +15,11 @@ void main() {
 //    final course = parseCourse(resultRows[0]);
 //    final offering = parseOfferingRows(resultRows);
 //  });
+  Course bigCourse;
   test('Normal course', () async {
     final List<Course> courses = await loadCourses('normal.html');
-    final Course course = courses.first;
+    bigCourse = courses.first;
+    final Course course = bigCourse;
     expect(course.departmentAcronym, 'ACCY');
     expect(course.name, 'Introduction to Financial Accounting');
     expect(course.bulletinLink, 'http://bulletin.gwu.edu/search/?P=ACCY+2001');
@@ -52,6 +54,10 @@ void main() {
     expect(classTime.endTime, TimeOfDay(hour: 21, minute: 5));
     expect(classTime.startTime, TimeOfDay(hour: 18, minute: 10));
     expect(classTime.location, 'DUQUES 152');
+  });
+
+  test('toJson', () {
+    bigCourse.toJson();
   });
 
   test('Multiple class times', () async {
