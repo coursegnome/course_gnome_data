@@ -1,5 +1,6 @@
 @TestOn('vm')
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:test/test.dart';
@@ -8,13 +9,6 @@ import 'package:core/core.dart';
 import 'package:course_gnome_scrape/GWUParser.dart' as gwu;
 
 void main() {
-//  test('Function completes succesfully', () {
-//    final courseResult =
-//        parse(courseString).getElementsByClassName('courseListing')[0];
-//    final resultRows = courseResult.getElementsByClassName('coursetable');
-//    final course = parseCourse(resultRows[0]);
-//    final offering = parseOfferingRows(resultRows);
-//  });
   Course bigCourse;
   test('Normal course', () async {
     final List<Course> courses = await loadCourses('normal.html');
@@ -30,6 +24,7 @@ void main() {
     expect(course.offerings.length, 1);
 
     final Offering offering = course.offerings.first;
+    expect(offering.parent, course);
     expect(
         offering.days, <bool>[false, false, true, false, true, false, false]);
     expect(offering.latestEndTime, TimeOfDay(hour: 21, minute: 5));

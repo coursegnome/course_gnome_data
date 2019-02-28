@@ -84,7 +84,9 @@ Future<List<Course>> parseResponse(
 }
 
 Future<List<Course>> parseCourse(
-    List<Element> resultRows, List<Course> courses) async {
+  List<Element> resultRows,
+  List<Course> courses,
+) async {
   final List<Element> cells = resultRows.first.querySelectorAll('td');
   final String depAcr = cells[2].querySelector('span').text.trim();
   final String depNumber = cells[2].querySelector('a').text.trim();
@@ -99,6 +101,7 @@ Future<List<Course>> parseCourse(
   final Offering offering = parseOffering(resultRows, false);
   if (courseIndex != -1) {
     courses[courseIndex].offerings.add(offering);
+    offering.parent = courses[courseIndex];
   } else {
     course = Course(
       description: await requestDescription(bulletinLink),
@@ -110,6 +113,7 @@ Future<List<Course>> parseCourse(
       offerings: <Offering>[offering],
     );
     courses.add(course);
+    offering.parent = course;
   }
   return courses;
 }

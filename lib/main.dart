@@ -6,7 +6,7 @@ import 'config.dart';
 Future<void> main() async {
   const gwu.Season season = gwu.Season.Summer2019;
   final List<Course> courses = await gwu.scrapeCourses(season);
-  await uploadCourses(courses, season);
+//  await uploadCourses(courses, season);
   print('Done!');
   return;
 }
