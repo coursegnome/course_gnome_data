@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:html/parser.dart' show parse;
@@ -6,35 +7,33 @@ import 'package:http/http.dart' as http;
 
 import 'package:core/core.dart';
 
-enum Season {
-  Spring2019,
-  Summer2019,
-}
-
 String getSeasonCode(Season season) {
   switch (season) {
-    case Season.Spring2019:
-      return '201901';
-    case Season.Summer2019:
+    case Season.summer2019:
       return '201902';
+    case Season.fall2019:
+      return '201903';
     default:
-      return '201902';
+      return '201903';
   }
 }
 
 Future<List<Course>> scrapeCourses(Season season) async {
-  print('Scraping courses for season: $season');
+  print('Scraping courses for season: ${season.id}');
 
   const String url =
       'https://us-central1-course-gnome.cloudfunctions.net/getHTML';
   final String seasonCode = getSeasonCode(season);
   const int maxEndIndex = 10000;
   final http.Client client = http.Client();
-  final int indexIncrement = season == Season.Summer2019 ? 500 : 100;
+  final int indexIncrement = season == Season.summer2019 ? 500 : 100;
   int startIndex = 1000;
-  int endIndex = season == Season.Summer2019 ? 1499 : 1099;
+  int endIndex = season == Season.summer2019 ? 1499 : 1099;
 
   final Stopwatch stopwatch = Stopwatch()..start();
+
+  // Set up cache
+  final Directory cacheDir = Directory('lib/cache/gwu/${season.id}')..create();
 
   List<Course> courses = <Course>[];
 
@@ -51,31 +50,44 @@ Future<List<Course>> scrapeCourses(Season season) async {
         'page': pageNum.toString(),
       };
       try {
-        final http.Response response = await client.post(url, body: body);
-        courses = await parseResponse(response.body, courses);
-        lastPage = response.body.contains('Next Page');
+        String html;
+        final File file = File('${cacheDir.path}/$startIndex - $pageNum.html');
+        if (false) {
+          final http.Response response = await client.post(url, body: body);
+          file.writeAsString(response.body);
+          html = response.body;
+        } else {
+          html = file.readAsStringSync();
+        }
+        courses = await parseResponse(html, courses, season);
+        lastPage = html.contains('Next Page');
       } catch (e) {
         print(e);
         return null;
       }
       ++pageNum;
+      if (pageNum > 3) {
+        return courses;
+      }
     } while (lastPage);
+    return courses;
     startIndex += indexIncrement;
     endIndex += indexIncrement;
-    print('Time elapsed: ${stopwatch.elapsed.inSeconds}');
+    print('Time elapsed: ${stopwatch.elapsed.inSeconds} seconds');
   }
   client.close();
   return courses;
 }
 
 Future<List<Course>> parseResponse(
-    String response, List<Course> courses) async {
+    String response, List<Course> courses, Season season) async {
   final List<Element> results =
       parse(response).getElementsByClassName('courseListing');
   for (Element result in results) {
     courses = await parseCourse(
       result.getElementsByClassName('coursetable'),
       courses,
+      season,
     );
     print(
         'Parsed: ${courses.last.name} - ${courses.last.offerings.last.sectionNumber}');
@@ -86,6 +98,7 @@ Future<List<Course>> parseResponse(
 Future<List<Course>> parseCourse(
   List<Element> resultRows,
   List<Course> courses,
+  Season season,
 ) async {
   final List<Element> cells = resultRows.first.querySelectorAll('td');
   final String depAcr = cells[2].querySelector('span').text.trim();
@@ -96,6 +109,8 @@ Future<List<Course>> parseCourse(
       c.departmentNumber == depNumber &&
       c.departmentAcronym == depAcr &&
       c.name == name);
+  //final String description = await requestDescription(bulletinLink);
+  String description;
 
   Course course;
   final Offering offering = parseOffering(resultRows, false);
@@ -104,7 +119,9 @@ Future<List<Course>> parseCourse(
     offering.parent = courses[courseIndex];
   } else {
     course = Course(
-      description: await requestDescription(bulletinLink),
+      school: School.gwu,
+      season: season,
+      description: description,
       name: name,
       departmentAcronym: depAcr,
       departmentNumber: depNumber,
@@ -220,7 +237,7 @@ Offering parseOffering(List<Element> resultRows, bool linked) {
     linkedOfferings: linkedOfferings,
     status: status,
     sectionNumber: rowOneCells[3].text.trim(),
-    crn: rowOneCells[1].text.trim(),
+    id: rowOneCells[1].text.trim(),
     linkedOfferingsName: linkedOfferingsName,
     comments: comments,
     findBooksLink: findBooksLink,

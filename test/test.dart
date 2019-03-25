@@ -32,7 +32,7 @@ void main() {
     expect(offering.linkedOfferings, isNull);
     expect(offering.linkedOfferingsName, isNull);
     expect(offering.status, Status.Open);
-    expect(offering.crn, '10704');
+    expect(offering.id, '10704');
     expect(offering.sectionNumber, '10');
     expect(offering.instructors, <String>['Tarpley, R']);
     expect(offering.fee, isNull);
