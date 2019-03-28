@@ -1,34 +1,27 @@
+import 'dart:convert';
 import 'package:algolia/algolia.dart';
 import 'package:core/core.dart';
 import 'GWUParser.dart' as gwu;
-import 'config.dart';
+import 'config.dart' as config;
 
 Future<void> main() async {
   const Season season = Season.fall2019;
-  final List<Course> courses = await gwu.scrapeCourses(season);
-  await uploadCourses(courses);
+  final List<SearchOffering> offerings = await gwu.scrapeCourses(season);
+  await uploadOfferings(offerings);
   print('Done!');
   return;
 }
 
-Future<void> uploadCourses(List<Course> courses) async {
-  print('Uploading courses');
-  print(courses.length);
-  const String index = 'courses';
-  final Algolia algolia = const Algolia.init(
-    applicationId: '4AISU681XR',
-    apiKey: algoliaApiKey,
-  )..instance.index(index).clearIndex();
-  final AlgoliaBatch batch = algolia.instance.index(index).batch()
+Future<void> uploadOfferings(List<SearchOffering> courses) async {
+  print('Uploading offerings');
+  const Algolia algolia = Algolia.init(
+    applicationId: config.appId,
+    apiKey: config.algoliaApiKey,
+  );
+  final AlgoliaBatch batch = algolia.instance.index(config.index).batch()
     ..clearIndex();
-  for (final Course course in courses) {
-    for (final Offering offering in course.offerings) {
-      Map<String, dynamic> map = <String, dynamic>{
-        'course': course.toJson(),
-        'offering': offering.toJson(),
-      };
-      batch.addObject(map);
-    }
+  for (final SearchOffering offering in courses) {
+    batch.addObject(jsonDecode(jsonEncode(offering)));
   }
   await batch.commit();
   return;

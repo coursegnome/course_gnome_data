@@ -4,3 +4,5 @@ config.dart
 .dart_tool/
 .packages
 pubspec.lock
+
+lib/cache
