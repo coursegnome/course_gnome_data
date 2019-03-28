@@ -12,7 +12,7 @@ Future<List<SearchOffering>> scrapeCourses(Season season) async {
 
   const String url =
       'https://us-central1-course-gnome.cloudfunctions.net/getHTML';
-  final String seasonCode = getSeasonCode(season);
+  final String seasonCode = _getSeasonCode(season);
   const int maxEndIndex = 10000;
   final http.Client client = http.Client();
   final int indexIncrement = season == Season.summer2019 ? 500 : 100;
@@ -64,7 +64,7 @@ Future<List<SearchOffering>> scrapeCourses(Season season) async {
   return offerings;
 }
 
-String getSeasonCode(Season season) {
+String _getSeasonCode(Season season) {
   switch (season) {
     case Season.summer2019:
       return '201902';
@@ -81,7 +81,7 @@ Future<List<SearchOffering>> parseResponse(
       parse(response).getElementsByClassName('courseListing');
   final List<SearchOffering> offerings =
       await Future.wait(results.map((Element result) async {
-    final SearchOffering offering = await parseCourse(
+    final SearchOffering offering = await _parseCourse(
       result.getElementsByClassName('coursetable'),
       season,
     );
@@ -91,7 +91,7 @@ Future<List<SearchOffering>> parseResponse(
   return offerings;
 }
 
-Future<SearchOffering> parseCourse(
+Future<SearchOffering> _parseCourse(
   List<Element> resultRows,
   Season season,
 ) async {
@@ -105,14 +105,14 @@ Future<SearchOffering> parseCourse(
     final String credit = rowOneCells[5].text.trim();
     final String id = rowOneCells[1].text.trim();
     final String sectionText = rowOneCells[3].text.trim();
-    final int section = parseSection(sectionText);
+    final int section = _parseSection(sectionText);
     final String statusString = rowOneCells.first.text.trim();
     final Status status = statusString == 'OPEN'
         ? Status.Open
         : statusString == 'CLOSED' ? Status.Closed : Status.Waitlist;
-    final List<String> instructors = parseInstructors(rowOneCells);
-    final List<ClassTime> classTimes = parseClassTimes(rowOneCells);
-    final ClassTime range = calculateTimeRange(classTimes);
+    final List<String> instructors = _parseInstructors(rowOneCells);
+    final List<ClassTime> classTimes = _parseClassTimes(rowOneCells);
+    final ClassTime range = _calculateTimeRange(classTimes);
     return SearchOffering(
       name: name,
       deptAcr: depAcr,
@@ -136,7 +136,7 @@ Future<SearchOffering> parseCourse(
   }
 }
 
-int parseSection(String text) {
+int _parseSection(String text) {
   final String cleaned = text.replaceAll(RegExp('[A-Za-z]'), '');
   if (cleaned.isEmpty) {
     return null;
@@ -145,7 +145,7 @@ int parseSection(String text) {
   }
 }
 
-Future<String> requestDescription(String bulletinLink) async {
+Future<String> _requestDescription(String bulletinLink) async {
   final http.Response response = await http.post(bulletinLink);
   return parse(response.body)
       .getElementsByClassName('courseblockdesc')
@@ -154,7 +154,7 @@ Future<String> requestDescription(String bulletinLink) async {
       .trim();
 }
 
-List<String> parseInstructors(List<Element> rowOneCells) {
+List<String> _parseInstructors(List<Element> rowOneCells) {
   List<String> instructors;
   if (rowOneCells[6].text.trim().isNotEmpty) {
     instructors = rowOneCells[6].text.trim().split(';');
@@ -165,7 +165,7 @@ List<String> parseInstructors(List<Element> rowOneCells) {
   return instructors;
 }
 
-List<ClassTime> parseClassTimes(List<Element> rowOneCells) {
+List<ClassTime> _parseClassTimes(List<Element> rowOneCells) {
   final List<ClassTime> classTimes = <ClassTime>[];
   final List<String> locations = rowOneCells[7].text.trim().split('AND');
   final List<String> dayTimes = rowOneCells[8].text.trim().split('AND');
@@ -192,8 +192,8 @@ List<ClassTime> parseClassTimes(List<Element> rowOneCells) {
 
     classTimes.add(
       ClassTime(
-        start: parseTime(timeRange[0]),
-        end: parseTime(timeRange[1]),
+        start: _parseTime(timeRange[0]),
+        end: _parseTime(timeRange[1]),
         location: location.isNotEmpty ? location : null,
         u: dayList[0],
         m: dayList[1],
@@ -209,7 +209,7 @@ List<ClassTime> parseClassTimes(List<Element> rowOneCells) {
   return classTimes;
 }
 
-TimeOfDay parseTime(String time) {
+TimeOfDay _parseTime(String time) {
   final List<String> split = time.trim().split(':');
   final int minutes = int.parse(split[1].substring(0, 2));
   final String amPm = split[1].substring(2, 4);
@@ -220,7 +220,7 @@ TimeOfDay parseTime(String time) {
   return TimeOfDay(hour: hours, minute: minutes);
 }
 
-ClassTime calculateTimeRange(List<ClassTime> classTimes) {
+ClassTime _calculateTimeRange(List<ClassTime> classTimes) {
   List<bool> dayList;
   TimeOfDay earliestStartTime;
   TimeOfDay latestEndTime;
@@ -240,23 +240,23 @@ ClassTime calculateTimeRange(List<ClassTime> classTimes) {
   return ClassTime(
     start: earliestStartTime,
     end: latestEndTime,
-    u: dayList[0],
-    m: dayList[1],
-    t: dayList[2],
-    w: dayList[3],
-    r: dayList[4],
-    f: dayList[5],
-    s: dayList[6],
+    u: dayList == null ? null : dayList[0],
+    m: dayList == null ? null : dayList[1],
+    t: dayList == null ? null : dayList[2],
+    w: dayList == null ? null : dayList[3],
+    r: dayList == null ? null : dayList[4],
+    f: dayList == null ? null : dayList[5],
+    s: dayList == null ? null : dayList[6],
   );
 }
 
-int parseExtras(List<Element> resultRows) {
+int _parseExtras(List<Element> resultRows) {
   final List<Element> rowOneCells = resultRows[0].querySelectorAll('td');
   final List<Element> rowTwoCells = resultRows[1].children;
   final String bulletinLink =
       rowOneCells[2].querySelector('a').attributes['href'];
-    //final String description = await requestDescription(bulletinLink);
-    String description;
+  //final String description = await requestDescription(bulletinLink);
+  String description;
   String fee;
   if (resultRows.length > 2 && resultRows[2].classes.contains('crseRow3')) {
     final List<Element> feeRows = resultRows[2].querySelectorAll('td');

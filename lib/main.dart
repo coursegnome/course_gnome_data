@@ -5,14 +5,15 @@ import 'GWUParser.dart' as gwu;
 import 'config.dart' as config;
 
 Future<void> main() async {
-  const Season season = Season.fall2019;
-  final List<SearchOffering> offerings = await gwu.scrapeCourses(season);
+  final List<SearchOffering> offerings =
+      await gwu.scrapeCourses(Season.summer2019);
+  offerings.addAll(await gwu.scrapeCourses(Season.fall2019));
   await uploadOfferings(offerings);
   print('Done!');
   return;
 }
 
-Future<void> uploadOfferings(List<SearchOffering> courses) async {
+Future<void> uploadOfferings(List<SearchOffering> offerings) async {
   print('Uploading offerings');
   const Algolia algolia = Algolia.init(
     applicationId: config.appId,
@@ -20,7 +21,7 @@ Future<void> uploadOfferings(List<SearchOffering> courses) async {
   );
   final AlgoliaBatch batch = algolia.instance.index(config.index).batch()
     ..clearIndex();
-  for (final SearchOffering offering in courses) {
+  for (final SearchOffering offering in offerings) {
     batch.addObject(jsonDecode(jsonEncode(offering)));
   }
   await batch.commit();
