@@ -4,8 +4,10 @@ dependencies:
   core:
     path: ../course_gnome/core
   html: ^0.13.3+3
-  algolia: ^0.1.3+2
+  algolia:
+    path: ../dart_algolia
 #  firebase_dart:
 #    path: ../../firebase_dart
 dev_dependencies:
   test: ^1.5.3
+  pedantic: ^1.5.0
