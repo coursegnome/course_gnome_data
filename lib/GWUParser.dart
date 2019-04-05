@@ -6,6 +6,7 @@ import 'package:html/dom.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:core/core.dart';
+import 'departments.dart';
 
 Future<List<SearchOffering>> scrapeCourses(Season season) async {
   print('Scraping courses for season: ${season.id}');
@@ -99,6 +100,7 @@ Future<SearchOffering> _parseCourse(
   try {
     final List<Element> rowOneCells = resultRows.first.querySelectorAll('td');
     final String depAcr = rowOneCells[2].querySelector('span').text.trim();
+    final String depName = departments[depAcr];
     final String depNumberText = rowOneCells[2].querySelector('a').text.trim();
     final int depNumber =
         int.parse(depNumberText.replaceAll(RegExp('[A-Za-z]'), ''));
@@ -127,7 +129,7 @@ Future<SearchOffering> _parseCourse(
       deptNumInt: depNumber,
       sectionInt: section,
       range: range,
-      deptName: '',
+      deptName: depName,
       school: School.gwu.id,
       season: season.id,
     );
