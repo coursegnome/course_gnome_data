@@ -22,7 +22,8 @@ Future<List<SearchOffering>> scrapeCourses(Season season) async {
   final Stopwatch stopwatch = Stopwatch()..start();
 
   // Set up cache
-  final Directory cacheDir = Directory('lib/cache/gwu/${season.id}')..create();
+  final Directory cacheDir = Directory('lib/cache/gwu/${season.id}')
+    ..createSync();
 
   List<SearchOffering> offerings = <SearchOffering>[];
 
@@ -41,9 +42,9 @@ Future<List<SearchOffering>> scrapeCourses(Season season) async {
       try {
         String html;
         final File file = File('${cacheDir.path}/$startIndex - $pageNum.html');
-        if (true) {
+        if (false) {
           final http.Response response = await client.post(url, body: body);
-          file.writeAsString(response.body);
+          file.writeAsStringSync(response.body);
           html = response.body;
         } else {
           html = file.readAsStringSync();
@@ -132,7 +133,7 @@ Future<SearchOffering> _parseCourse(
     );
   } catch (e, s) {
     print(s.toString());
-    exit(0);
+    return null;
   }
 }
 
