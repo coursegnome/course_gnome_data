@@ -1,12 +1,11 @@
 @TestOn('vm')
 
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:test/test.dart';
 
-import 'package:core/core.dart';
-import 'package:course_gnome_scrape/GWUParser.dart' as gwu;
+import 'package:course_gnome_data/models.dart';
+import 'package:course_gnome_data/parsers.dart' as parsers;
 
 void main() {
   SearchOffering offering;
@@ -89,5 +88,9 @@ void main() {
 Future<List<SearchOffering>> loadOfferings(String fileSuffix) async {
   const String basePath = 'test/html/';
   final String courseString = await File(basePath + fileSuffix).readAsString();
-  return await gwu.parseResponse(courseString, Season.fall2019);
+  return await parsers.parse(
+    response: courseString,
+    season: Season.fall2019,
+    school: School.gwu,
+  );
 }

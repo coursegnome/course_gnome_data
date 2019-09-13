@@ -5,8 +5,8 @@ import 'package:html/parser.dart' show parse;
 import 'package:html/dom.dart';
 import 'package:http/http.dart' as http;
 
-import 'package:core/core.dart';
-import 'departments.dart';
+import 'package:course_gnome_data/src/models/course.dart';
+import 'package:course_gnome_data/src/parsers/gwu/gwu_departments.dart';
 
 Future<List<SearchOffering>> scrapeCourses(Season season) async {
   print('Scraping courses for season: ${season.id}');
@@ -23,7 +23,7 @@ Future<List<SearchOffering>> scrapeCourses(Season season) async {
   final Stopwatch stopwatch = Stopwatch()..start();
 
   // Set up cache
-  final Directory cacheDir = Directory('lib/cache/gwu/${season.id}')
+  final Directory cacheDir = Directory('lib/src/parsers/gwu/cache/${season.id}')
     ..createSync();
 
   List<SearchOffering> offerings = <SearchOffering>[];
@@ -43,6 +43,8 @@ Future<List<SearchOffering>> scrapeCourses(Season season) async {
       try {
         String html;
         final File file = File('${cacheDir.path}/$startIndex - $pageNum.html');
+        // '${cacheDir.path}/$startIndex - $endIndex, page $pageNum.html');
+
         if (false) {
           final http.Response response = await client.post(url, body: body);
           file.writeAsStringSync(response.body);

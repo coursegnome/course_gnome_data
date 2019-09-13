@@ -5,4 +5,5 @@ config.dart
 .packages
 pubspec.lock
 
-lib/cache
+cache/
+.vscode/launch.json

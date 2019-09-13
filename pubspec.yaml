@@ -1,10 +1,9 @@
-name: course_gnome_scrape
+name: course_gnome_data
 dependencies:
   http: ^0.12.0+1
-  core:
-    path: ../course_gnome/core
   html: ^0.13.3+3
   algolia: ^0.1.6+1 
 dev_dependencies:
   test: ^1.5.3
   pedantic: ^1.5.0
+  json_serializable: ^3.2.2
