@@ -1,5 +1,8 @@
-language: dart
-dart_task:
-  - dartfmt
-  - dartanalyzer: true
-  - test: --platform vm
+# language: dart
+# dart_task:
+#   - Format and analyze
+#   - dartfmt
+#   - dartanalyzer: true
+# dart_task:
+#   - Test
+#   - test: --platform vm
