@@ -1,0 +1,5 @@
+language: dart
+dart_task:
+  - dartfmt
+  - dartanalyzer: true
+  - test: --platform vm
